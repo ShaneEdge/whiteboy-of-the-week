@@ -16,7 +16,7 @@ export default function ArchivePage() {
             key={wb.id}
             className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900"
           >
-            <div className="relative aspect-[3/4]">
+            <div className="relative aspect-3/4">
               <Image
                 src={wb.imageSrc}
                 alt={wb.caption}
