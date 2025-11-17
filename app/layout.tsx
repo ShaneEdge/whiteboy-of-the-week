@@ -21,9 +21,13 @@ export default function RootLayout({
             <Link href="/" className="font-semibold text-lg">
               Whiteboy of the Week
             </Link>
+
             <nav className="flex gap-4 text-sm">
               <Link href="/archive" className="hover:underline">
                 Archive
+              </Link>
+              <Link href="/submit" className="hover:underline">
+                Submit
               </Link>
               <Link href="/about" className="hover:underline">
                 About
@@ -41,4 +45,5 @@ export default function RootLayout({
     </html>
   );
 }
+
 
