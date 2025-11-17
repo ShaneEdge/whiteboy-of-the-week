@@ -1,4 +1,5 @@
 // app/api/admin/submissions/route.ts
+import type { SubmissionStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -16,18 +17,23 @@ export async function PATCH(request: Request) {
   try {
     const body = await request.json();
     const id = String(body.id || "").trim();
-    const status = String(body.status || "").trim().toUpperCase();
+    const rawStatus = String(body.status || "").trim().toUpperCase();
 
-    if (!id || !["PENDING", "APPROVED", "REJECTED"].includes(status)) {
+    if (
+      !id ||
+      !["PENDING", "APPROVED", "REJECTED"].includes(rawStatus)
+    ) {
       return NextResponse.json(
         { error: "Invalid id or status" },
         { status: 400 }
       );
     }
 
+    const status = rawStatus as SubmissionStatus;
+
     const updated = await prisma.submission.update({
       where: { id },
-      data: { status: status as any },
+      data: { status },
     });
 
     return NextResponse.json(updated);
@@ -39,3 +45,4 @@ export async function PATCH(request: Request) {
     );
   }
 }
+
