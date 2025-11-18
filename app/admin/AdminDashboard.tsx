@@ -14,6 +14,8 @@ interface Submission {
   isAdult: boolean;
   hasConsent: boolean;
   status: SubmissionStatus;
+  // Optional: used if your API sends back featured info
+  isFeatured?: boolean;
 }
 
 export default function AdminDashboard() {
@@ -66,22 +68,52 @@ export default function AdminDashboard() {
     }
   }
 
+  // 🔹 Feature button handler
+  async function featureSubmission(id: string) {
+    try {
+      setError("");
+
+      // ⬇️ If your old API used a different route/method,
+      // just swap this out to match it.
+      const res = await fetch("/api/admin/feature", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to feature submission");
+      }
+
+      const updated: Submission = await res.json();
+      setSubmissions((prev) =>
+        prev.map((s) => (s.id === updated.id ? updated : s))
+      );
+    } catch (err) {
+      console.error(err);
+      setError("Failed to feature submission");
+    }
+  }
+
   return (
     <div className="space-y-4 p-4">
-      <h1 className="text-3xl font-bold">Admin – Submissions</h1>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <div>
+          <h1 className="text-3xl font-bold">Admin – Submissions</h1>
+          <p className="text-sm text-slate-300">
+            View and moderate Whiteboy of the Week submissions.
+          </p>
+        </div>
 
-      <p className="text-sm text-slate-300">
-        View and moderate Whiteboy of the Week submissions.
-      </p>
+        <button
+          onClick={loadSubmissions}
+          className="rounded-full border border-slate-500 px-3 py-1 text-xs hover:border-slate-300"
+        >
+          Refresh
+        </button>
+      </div>
 
       {error && <p className="text-xs text-red-400">{error}</p>}
-
-      <button
-        onClick={loadSubmissions}
-        className="rounded-full border border-slate-500 px-3 py-1 text-xs hover:border-slate-300"
-      >
-        Refresh
-      </button>
 
       {loading ? (
         <p className="text-sm text-slate-400">Loading submissions…</p>
@@ -97,7 +129,14 @@ export default function AdminDashboard() {
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 {/* Left side: text details */}
                 <div className="flex-1">
-                  <p className="font-semibold">{s.name}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold">{s.name}</p>
+                    {s.isFeatured && (
+                      <span className="rounded-full bg-yellow-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-300">
+                        Featured
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-slate-400">{s.contact}</p>
                   <p className="mt-1 text-xs text-slate-400">
                     Submitted: {new Date(s.createdAt).toLocaleString()}
@@ -119,7 +158,7 @@ export default function AdminDashboard() {
                       alt={`Submission from ${s.name}`}
                       className="h-32 w-full rounded-lg border border-slate-700 object-cover"
                     />
-                    <p className="mt-1 text-[10px] text-slate-500 text-center">
+                    <p className="mt-1 text-[10px] text-center text-slate-500">
                       Preview
                     </p>
                   </div>
@@ -157,6 +196,12 @@ export default function AdminDashboard() {
                   className="rounded-full border border-slate-500 px-3 py-1 hover:bg-slate-500/10"
                 >
                   Reset
+                </button>
+                <button
+                  onClick={() => featureSubmission(s.id)}
+                  className="rounded-full border border-yellow-500 px-3 py-1 hover:bg-yellow-500/10"
+                >
+                  Feature
                 </button>
               </div>
             </div>
