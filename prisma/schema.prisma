@@ -24,5 +24,6 @@ model Submission {
   isAdult    Boolean
   hasConsent Boolean
   status     SubmissionStatus @default(PENDING)
+  featured     Boolean  @default(false)
 }
 
