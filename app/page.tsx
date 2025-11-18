@@ -1,6 +1,7 @@
 // app/page.tsx
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import SubscribeForm from "./components/SubscribeForm";
 
 export default async function Home() {
   const featured = await prisma.submission.findFirst({
@@ -86,14 +87,18 @@ export default async function Home() {
             </div>
           </div>
         )}
-      </section>
+            </section>
+
+      {/* 👇 Subscribe Section */}
+      <SubscribeForm />
 
       <section className="text-xs text-slate-500">
         <p>
-          If you want a submission removed, contact the
-          site owner and it will be taken down.
+          If you want a submission removed, contact the site owner and it will be
+          taken down.
         </p>
       </section>
     </div>
   );
 }
+

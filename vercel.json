@@ -1,0 +1,13 @@
+{
+  "crons": [
+    {
+      "path": "/api/admin/rotate-feature",
+      "schedule": "0 5 * * 3"
+    },
+    {
+      "path": "/api/admin/send-wednesday-emails",
+      "schedule": "0 5 * * 3"
+    }
+  ]
+}
+
