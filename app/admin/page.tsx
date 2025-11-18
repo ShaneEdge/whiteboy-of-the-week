@@ -1,151 +1,117 @@
-// app/admin/page.tsx
-"use client";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import AdminDashboard from "./AdminDashboard";
 
-import { useEffect, useState } from "react";
+const SESSION_COOKIE_NAME = "admin_session";
 
-type SubmissionStatus = "PENDING" | "APPROVED" | "REJECTED";
+export default async function AdminPage() {
+  // ⬇️ NEW: cookies() is async now
+  const cookieStore = await cookies();
+  const session = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+  const isAuthed = session === process.env.ADMIN_SESSION_SECRET;
 
-interface Submission {
-  id: string;
-  createdAt: string;
-  name: string;
-  contact: string;
-  imageUrl: string;
-  isAdult: boolean;
-  hasConsent: boolean;
-  status: SubmissionStatus;
-}
+  // Server action: login
+  async function login(formData: FormData) {
+    "use server";
 
-export default function AdminPage() {
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+    const password = formData.get("password");
 
-  async function loadSubmissions() {
-    try {
-      setLoading(true);
-      setError("");
-      const res = await fetch("/api/admin/submissions");
-      if (!res.ok) {
-        throw new Error("Failed to load submissions");
-      }
-      const data = await res.json();
-      setSubmissions(data);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to load submissions");
-    } finally {
-      setLoading(false);
+    // Basic sanity checks
+    if (
+      typeof password !== "string" ||
+      !process.env.ADMIN_PASSWORD ||
+      !process.env.ADMIN_SESSION_SECRET
+    ) {
+      redirect("/admin?error=1");
     }
+
+    if (password !== process.env.ADMIN_PASSWORD) {
+      // Wrong password
+      redirect("/admin?error=1");
+    }
+
+    // ⬇️ NEW: await cookies() inside the action too
+    const cookieStore = await cookies();
+
+    // Set secure session cookie
+    cookieStore.set(SESSION_COOKIE_NAME, process.env.ADMIN_SESSION_SECRET!, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/admin",
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+    });
+
+    redirect("/admin");
   }
 
-  useEffect(() => {
-    loadSubmissions();
-  }, []);
+  // Server action: logout
+  async function logout() {
+    "use server";
 
-  async function updateStatus(id: string, status: SubmissionStatus) {
-    try {
-      setError("");
-      const res = await fetch("/api/admin/submissions", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, status }),
-      });
+    const cookieStore = await cookies();
+    cookieStore.delete(SESSION_COOKIE_NAME);
 
-      if (!res.ok) {
-        throw new Error("Failed to update status");
-      }
-
-      const updated: Submission = await res.json();
-      setSubmissions((prev) =>
-        prev.map((s) => (s.id === updated.id ? updated : s))
-      );
-    } catch (err) {
-      console.error(err);
-      setError("Failed to update submission status");
-    }
+    redirect("/admin");
   }
 
-  return (
-    <div className="space-y-4">
-      <h1 className="text-3xl font-bold">Admin – Submissions</h1>
+  // If not authenticated, show login form
+  if (!isAuthed) {
+    return (
+      <main className="min-h-screen flex items-center justify-center">
+        <div className="w-full max-w-sm space-y-4 border rounded-xl p-6 shadow">
+          <h1 className="text-xl font-bold text-center">Admin Login</h1>
 
-      <p className="text-sm text-slate-300">
-        View and moderate Whiteboy of the Week submissions.
-      </p>
-
-      {error && <p className="text-xs text-red-400">{error}</p>}
-
-      <button
-        onClick={loadSubmissions}
-        className="rounded-full border border-slate-500 px-3 py-1 text-xs hover:border-slate-300"
-      >
-        Refresh
-      </button>
-
-      {loading ? (
-        <p className="text-sm text-slate-400">Loading submissions…</p>
-      ) : submissions.length === 0 ? (
-        <p className="text-sm text-slate-400">No submissions yet.</p>
-      ) : (
-        <div className="space-y-3">
-          {submissions.map((s) => (
-            <div
-              key={s.id}
-              className="rounded-xl border border-slate-800 bg-slate-900 p-3 text-sm"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="font-semibold">{s.name}</p>
-                  <p className="text-xs text-slate-400">{s.contact}</p>
-                  <p className="mt-1 text-xs text-slate-400">
-                    Submitted: {new Date(s.createdAt).toLocaleString()}
-                  </p>
-                  <p className="mt-1 text-xs break-all text-slate-400">
-                    Image URL: {s.imageUrl}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-400">
-                    18+ confirmed: {s.isAdult ? "Yes" : "No"} • Consent:{" "}
-                    {s.hasConsent ? "Yes" : "No"}
-                  </p>
-                </div>
-                <span
-                  className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                    s.status === "APPROVED"
-                      ? "bg-emerald-900 text-emerald-200"
-                      : s.status === "REJECTED"
-                      ? "bg-red-900 text-red-200"
-                      : "bg-slate-800 text-slate-200"
-                  }`}
-                >
-                  {s.status}
-                </span>
-              </div>
-
-              <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                <button
-                  onClick={() => updateStatus(s.id, "APPROVED")}
-                  className="rounded-full border border-emerald-500 px-3 py-1 hover:bg-emerald-500/10"
-                >
-                  Approve
-                </button>
-                <button
-                  onClick={() => updateStatus(s.id, "REJECTED")}
-                  className="rounded-full border border-red-500 px-3 py-1 hover:bg-red-500/10"
-                >
-                  Reject
-                </button>
-                <button
-                  onClick={() => updateStatus(s.id, "PENDING")}
-                  className="rounded-full border border-slate-500 px-3 py-1 hover:bg-slate-500/10"
-                >
-                  Reset
-                </button>
-              </div>
+          <form action={login} className="space-y-4">
+            <div className="flex flex-col gap-1">
+              <label htmlFor="password" className="text-sm font-medium">
+                Admin Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                className="border rounded-md px-3 py-2 text-sm w-full"
+                placeholder="Enter admin password"
+                required
+              />
             </div>
-          ))}
+
+            <button
+              type="submit"
+              className="w-full rounded-md px-3 py-2 text-sm font-medium border"
+            >
+              Log In
+            </button>
+          </form>
+
+          <p className="text-xs text-center text-gray-500">
+            Access is restricted to site moderators.
+          </p>
         </div>
-      )}
-    </div>
+      </main>
+    );
+  }
+
+  // If authenticated, show dashboard with Logout
+  return (
+    <main className="min-h-screen flex flex-col">
+      <header className="w-full border-b px-4 py-3 flex items-center justify-between">
+        <h1 className="font-semibold">Admin Tools</h1>
+
+        <form action={logout}>
+          <button
+            type="submit"
+            className="text-sm border rounded-md px-3 py-1"
+          >
+            Log out
+          </button>
+        </form>
+      </header>
+
+      <section className="flex-1">
+        <AdminDashboard />
+      </section>
+    </main>
   );
 }
