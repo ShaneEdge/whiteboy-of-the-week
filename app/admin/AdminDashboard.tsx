@@ -94,8 +94,9 @@ export default function AdminDashboard() {
               key={s.id}
               className="rounded-xl border border-slate-800 bg-slate-900 p-3 text-sm"
             >
-              <div className="flex items-start justify-between gap-2">
-                <div>
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                {/* Left side: text details */}
+                <div className="flex-1">
                   <p className="font-semibold">{s.name}</p>
                   <p className="text-xs text-slate-400">{s.contact}</p>
                   <p className="mt-1 text-xs text-slate-400">
@@ -109,8 +110,24 @@ export default function AdminDashboard() {
                     {s.hasConsent ? "Yes" : "No"}
                   </p>
                 </div>
+
+                {/* Middle: thumbnail preview */}
+                {s.imageUrl && (
+                  <div className="mt-2 w-full max-w-[140px] self-start md:mt-0">
+                    <img
+                      src={s.imageUrl}
+                      alt={`Submission from ${s.name}`}
+                      className="h-32 w-full rounded-lg border border-slate-700 object-cover"
+                    />
+                    <p className="mt-1 text-[10px] text-slate-500 text-center">
+                      Preview
+                    </p>
+                  </div>
+                )}
+
+                {/* Right: status pill */}
                 <span
-                  className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                  className={`mt-2 inline-flex h-fit rounded-full px-2 py-0.5 text-xs font-medium md:mt-0 ${
                     s.status === "APPROVED"
                       ? "bg-emerald-900 text-emerald-200"
                       : s.status === "REJECTED"
@@ -149,4 +166,3 @@ export default function AdminDashboard() {
     </div>
   );
 }
-

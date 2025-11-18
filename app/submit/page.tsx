@@ -202,7 +202,7 @@ export default function SubmitPage() {
           {previewUrl && (
             <div className="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-900 p-2">
               <p className="mb-2 text-xs text-slate-400">Preview:</p>
-              <div className="relative aspect-[3/4] w-32 overflow-hidden rounded-lg">
+              <div className="relative aspect-3/4 w-32 overflow-hidden rounded-lg">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={previewUrl}

@@ -18,7 +18,7 @@ export default function AboutPage() {
       </p>
 
       <p className="text-sm text-slate-300">
-        In the future, we might add submissions, email reminders for new
+        In the future, we might add email reminders for new
         Wednesdays, and rotating seasonal themes. For now, enjoy the weekly
         drop.
       </p>
